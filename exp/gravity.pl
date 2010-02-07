@@ -62,7 +62,7 @@ sub update_particle
 }
 
 
-use constant G      => 0.003;
+use constant G      => 0.03;
 
 
 my $sim = Physics::Particles->new();
@@ -125,6 +125,18 @@ $sim->add_particle(
 
 my $event = SDL::Event->new();
 
+sub warp
+{
+   my $p = shift;
+
+	$p->{x} = 0 if ($p->{x} > $app->w);
+	$p->{y} = 0 if ($p->{y} > $app->w);
+	$p->{x} = $app->w if ($p->{x} < 0);
+	$p->{y} = $app->h if ($p->{y} < 0);
+
+
+}
+
 my $cont = 1;
 while($cont){
 
@@ -136,12 +148,8 @@ while($cont){
 #		print Dumper $p;
 		update();
 		update_particle($p);
+		warp($p)
 
-		if ($p->{x} > $app->w || $p->{y} > $app->w)
-		{
-			$p->{x} = $app->w/2;
-			$p->{y} = $app->h/2;
-		}
 	}
 	$sim->iterate_step(1);
 }
