@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
     requires => 
     {
            'SDL' => '2.3_5',
+           'Physics::Particles' => '1.02'
     },
     add_to_cleanup      => [ 'Gravong-*' ],
     create_makefile_pl => 'traditional',

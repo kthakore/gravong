@@ -3,6 +3,8 @@ package Gravong;
 use warnings;
 use strict;
 
+use SDL;
+
 =head1 NAME
 
 Gravong - Gravity and Pong, yeah you heard me!
@@ -36,6 +38,13 @@ Perhaps a little code snippet.
 
 sub run{
 	
+	print $VERSION;
+	
+}
+
+sub _init
+{
+
 }
 
 =head1 AUTHOR
