@@ -19,12 +19,12 @@ use Physics::Particles;
 
 SDL::init(SDL_INIT_VIDEO);
 
-my $app = SDL::Video::set_video_mode (  800,  600, 32, SDL_HWSURFACE | SDL_DOUBLEBUF );
+my $app = SDL::Video::set_video_mode (  800,  600, 32, SDL_SWSURFACE);
 my $app_rect = SDL::Rect->new(0,0,800,  600);
 my @old_part_rect;
 my @new_part_rect;
 my @color;
-
+my $bg_surf = update_bg();
 
 use constant G      => 0.03;
 
@@ -104,8 +104,12 @@ while($cont){
 
 sub update_bg
 {
-	
-return	SDL::Video::fill_rect( $app, $app_rect, SDL::Video::map_RGB ( $app->format, 0, 0, 10 ));
+	my $bg = SDL::Surface->new(SDL_SWSURFACE, $app->w ,$app->h, 32, 0, 0, 0, 0);
+
+	SDL::Video::fill_rect( $bg, $app_rect, SDL::Video::map_RGB ( $app->format, 0, 0, 0 ));
+
+	SDL::Video::display_format($bg);
+	return $bg;
 	
 
 }
@@ -132,10 +136,13 @@ sub warp
 
 }
 
+
+
 sub update
 {
 	
- update_bg();
+ SDL::Video::blit_surface( $bg_surf, SDL::Rect->new(0,0,$bg_surf->w, $bg_surf->h), $app, SDL::Rect->new(0, 0, $app->w, $app->h) );
+
  foreach my $p (@{ $sim->{p} }) {
 
 #		print Dumper $p;
