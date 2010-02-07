@@ -18,6 +18,7 @@ provides:
     file: lib/Gravong.pm
     version: 0.01
 requires:
+  Physics::Particles: 1.02
   SDL: 2.3_5
 resources:
   license: http://dev.perl.org/licenses/
