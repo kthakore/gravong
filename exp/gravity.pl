@@ -95,7 +95,7 @@ sub update_bg {
       SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0 );
 
     SDL::Video::fill_rect( $bg, $app_rect,
-        SDL::Video::map_RGB( $app->format, 200, 200, 255 ) );
+        SDL::Video::map_RGB( $app->format, 190, 230, 200 ) );
 
     SDL::Video::display_format($bg);
     return $bg;
@@ -118,9 +118,9 @@ sub warp {
     my $p = shift;
 
     $p->{vx} *= -1       if $p->{x} > ( $app->w - ($p->{m}/2)) && $p->{vx} >0;
-    $p->{vy}  *= -1       if $p->{y} > ( $app->h - ($p->{m}/2) ) && $p->{vy} > 0;
+    $p->{vy} *= -1       if $p->{y} > ( $app->h - ($p->{m}/2) ) && $p->{vy} > 0;
     $p->{vx} *= -1       if $p->{x} < (0 + ($p->{m}/2) )  && $p->{vx} < 0;
-    $p->{vy} *= -1       if $p->{y} < (0  + ($p->{m}/2) ) && $p->{vx} <0;
+    $p->{vy} *= -1       if $p->{y} < (0  + ($p->{m}/2) ) && $p->{vy} <0;
 }
 
 sub update {
