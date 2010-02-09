@@ -13,6 +13,8 @@ use SDL::Rect;
 use SDL::Events;
 use SDL::Event;
 use SDL::Time;
+use SDL::Color;
+use SDL::GFX::Primitives;
 use Data::Dumper;
 
 use Physics::Particles;
@@ -27,7 +29,8 @@ my @old_part_rect;
 my @new_part_rect;
 my @color;
 my $fps = 30;
-my $bg_surf = update_bg();
+my $bg_surf = update_bg($app);
+my $par=0;
 
 my $sim = Physics::Particles->new();
 
@@ -44,6 +47,7 @@ $sim->add_force(
 
         my $dist = sqrt( $x_dist**2 + $y_dist**2 + $z_dist**2 );
 
+
         # force = m1*m2*unit_vector_from_r1_to_r2/distance**2
         # a = f/m1 (module does that for us)
 
@@ -58,38 +62,10 @@ $sim->add_force(
     1    # symmetric force
 );
 
-$sim->add_particle(
-    x  => $app->w / 2,
-    y  => $app->h / 2,
-    z  => 0,
-    vx => 0.0,
-    vy => 0.0,
-    vz => 0,
-    m  => 35,
-    n  => 1,
-);
 
-$sim->add_particle(
-    x  => rand( $app->w - 10 ),
-    y  => rand( $app->h - 10 ),
-    z  => 0,
-    vx => 0.4,
-    vy => -0.2,
-    vz => 0,
-    m  => 10,
-    n  => 0,
-);
 
-$sim->add_particle(
-    x  => rand( $app->w - 10 ),
-    y  => rand( $app->h - 10 ),
-    z  => 0,
-    vx => 0.0,
-    vy => 0.1,
-    vz => 0,
-    m  => 12,
-    n  => 2,
-);
+
+rand_particle($sim) foreach(0..5);
 
 my $event = SDL::Event->new();
 my $time = SDL::get_ticks;
@@ -114,11 +90,12 @@ my $oldtime = $time;
 }
 
 sub update_bg {
+    my $app = shift;
     my $bg =
       SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0 );
 
     SDL::Video::fill_rect( $bg, $app_rect,
-        SDL::Video::map_RGB( $app->format, 0, 0, 0 ) );
+        SDL::Video::map_RGB( $app->format, 200, 200, 255 ) );
 
     SDL::Video::display_format($bg);
     return $bg;
@@ -126,21 +103,24 @@ sub update_bg {
 
 sub init_particle_surf {
     my $size = shift;
-    my $bg = SDL::Surface->new( SDL_SWSURFACE, $size, $size, 32, 0, 0, 0, 0 );
-    SDL::Video::fill_rect( $bg, SDL::Rect->new( 0, 0, $size, $size ),
-        rand_color() );
+   
+    my $bg = SDL::Surface->new( SDL_SWSURFACE, $size+15, $size+15, 32, 0, 0, 0, 255 );
+    
+    SDL::GFX::Primitives::filled_circle_color($bg, $size/2, $size/2, $size/2 -2, rand_color());
 
     SDL::Video::display_format($bg);
+     my $pixel = SDL::Color->new(0x00, 0x00, 0x00 );
+     SDL::Video::set_color_key($bg, SDL_SRCCOLORKEY, $pixel);
     return $bg;
 }
 
 sub warp {
     my $p = shift;
 
-    $p->{x} = 0       if $p->{x} > $app->w;
-    $p->{y} = 0       if $p->{y} > $app->w;
-    $p->{x} = $app->w if $p->{x} < 0;
-    $p->{y} = $app->h if $p->{y} < 0;
+    $p->{vx} *= -1       if $p->{x} > ( $app->w - ($p->{m}/2)) && $p->{vx} >0;
+    $p->{vy}  *= -1       if $p->{y} > ( $app->h - ($p->{m}/2) ) && $p->{vy} > 0;
+    $p->{vx} *= -1       if $p->{x} < (0 + ($p->{m}/2) )  && $p->{vx} < 0;
+    $p->{vy} *= -1       if $p->{y} < (0  + ($p->{m}/2) ) && $p->{vx} <0;
 }
 
 sub update {
@@ -160,11 +140,8 @@ sub update {
 }
 
 sub rand_color {
-    my $r = rand( 30 + 255 ) - 30;
-    my $b = rand( 30 + 255 ) - 30;
-    my $g = rand( 30 + 255 ) - 30;
+        return rand( 0xFFFFFF)  ;
 
-    return SDL::Video::map_RGB( $app->format, $r, $g, $b );
 }
 
 sub update_particle {
@@ -182,12 +159,32 @@ sub update_particle {
         $new_part_rect,
         $app,
         SDL::Rect->new(
-            $p->{x} - $size / 2,
-            $p->{y} - $size / 2,
+            $p->{x} - ($size / 2),
+            $p->{y} - ($size / 2),
             $app->w, $app->h
         )
     );
 
 #SDL::Video::update_rects ( $app, $old_part_rect[$p->{n}], $new_part_rect ) if( defined $old_part_rect[$p->{n}] );
     $old_part_rect[ $p->{n} ] = $new_part_rect;
+}
+
+sub rand_particle
+{
+    
+    my $sim = shift;
+
+my $t = $par++;
+$sim->add_particle ( 
+    x  => rand( $app->w ) +50,
+    y  => rand( $app->h) +50,
+    z  => 0,
+    vx => rand(1) - rand(1),
+    vy => rand(1) -rand(1),
+    vz => 0,
+    m  => rand(36)+12,
+    n  => $t,
+);
+
+
 }
