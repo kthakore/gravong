@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 
-
 #Get SDL from http://github.com/kthakore/SDL_perl/tree/redesign (might be down)
 #or from http://search.cpan.org/~kthakore/SDL-2.3_5/
 
@@ -16,10 +15,11 @@ use SDL::Time;
 use SDL::Color;
 use SDL::GFX::Primitives;
 use Data::Dumper;
+use Carp;
 
 use Physics::Particles;
 
-use constant G => 0.03;
+use constant G => 0.003;
 
 SDL::init(SDL_INIT_VIDEO);
 
@@ -28,9 +28,9 @@ my $app_rect = SDL::Rect->new( 0, 0, 800, 600 );
 my @old_part_rect;
 my @new_part_rect;
 my @color;
-my $fps = 30;
+my $fps     = 30;
 my $bg_surf = update_bg($app);
-my $par=0;
+my $par     = 0;
 
 my $sim = Physics::Particles->new();
 
@@ -47,7 +47,6 @@ $sim->add_force(
 
         my $dist = sqrt( $x_dist**2 + $y_dist**2 + $z_dist**2 );
 
-
         # force = m1*m2*unit_vector_from_r1_to_r2/distance**2
         # a = f/m1 (module does that for us)
 
@@ -62,18 +61,29 @@ $sim->add_force(
     1    # symmetric force
 );
 
-
-
-
-rand_particle($sim) foreach(0..5);
+rand_particle($sim) foreach ( 0 .. 5 );
 
 my $event = SDL::Event->new();
-my $time = SDL::get_ticks;
-my $cont = 1;
-while ($cont) {
+my $time  = SDL::get_ticks;
+my $cont  = 1;
+my ( $dt, $t, $accumulator, $cur_time ) = ( 1, 0, 0, SDL::get_ticks() );
 
-my $oldtime = $time;
-  my $now = SDL::get_ticks;
+while ($cont) {
+    my $new_time   = SDL::get_ticks();
+    my $delta_time = $new_time - $cur_time;
+    #carp "new_time: $new_time , delta_time: $delta_time, cur_time: $delta_time";
+
+    next if ( $delta_time <= 0.0 );
+
+    $cur_time = $new_time;
+
+    $accumulator += $delta_time;
+
+    while ( $accumulator >= $dt ) {
+        $sim->iterate_step($dt);
+        $accumulator -= $dt;
+        $t += $dt;
+    }
 
     while ( SDL::Events::poll_event($event) ) {
         $cont = 0
@@ -82,11 +92,6 @@ my $oldtime = $time;
 
     update();
 
-    $sim->iterate_step(1);
-    $time = SDL::get_ticks;
-  if (($time - $oldtime) < (1000/$fps)) {
-    SDL::delay((1000/$fps) - ($time - $oldtime));
-  }
 }
 
 sub update_bg {
@@ -103,24 +108,28 @@ sub update_bg {
 
 sub init_particle_surf {
     my $size = shift;
-   
-    my $bg = SDL::Surface->new( SDL_SWSURFACE, $size+15, $size+15, 32, 0, 0, 0, 255 );
-    
-    SDL::GFX::Primitives::filled_circle_color($bg, $size/2, $size/2, $size/2 -2, rand_color());
+
+    my $bg =
+      SDL::Surface->new( SDL_SWSURFACE, $size + 15, $size + 15, 32, 0, 0, 0,
+        255 );
+
+    SDL::GFX::Primitives::filled_circle_color( $bg, $size / 2, $size / 2,
+        $size / 2 - 2,
+        rand_color() );
 
     SDL::Video::display_format($bg);
-     my $pixel = SDL::Color->new(0x00, 0x00, 0x00 );
-     SDL::Video::set_color_key($bg, SDL_SRCCOLORKEY, $pixel);
+    my $pixel = SDL::Color->new( 0x00, 0x00, 0x00 );
+    SDL::Video::set_color_key( $bg, SDL_SRCCOLORKEY, $pixel );
     return $bg;
 }
 
 sub warp {
     my $p = shift;
 
-    $p->{vx} *= -1       if $p->{x} > ( $app->w - ($p->{m}/2)) && $p->{vx} >0;
-    $p->{vy} *= -1       if $p->{y} > ( $app->h - ($p->{m}/2) ) && $p->{vy} > 0;
-    $p->{vx} *= -1       if $p->{x} < (0 + ($p->{m}/2) )  && $p->{vx} < 0;
-    $p->{vy} *= -1       if $p->{y} < (0  + ($p->{m}/2) ) && $p->{vy} <0;
+    $p->{vx} *= -1 if $p->{x} > ( $app->w - ( $p->{m} / 2 ) ) && $p->{vx} > 0;
+    $p->{vy} *= -1 if $p->{y} > ( $app->h - ( $p->{m} / 2 ) ) && $p->{vy} > 0;
+    $p->{vx} *= -1 if $p->{x} < ( 0 + ( $p->{m} / 2 ) ) && $p->{vx} < 0;
+    $p->{vy} *= -1 if $p->{y} < ( 0 + ( $p->{m} / 2 ) ) && $p->{vy} < 0;
 }
 
 sub update {
@@ -140,7 +149,7 @@ sub update {
 }
 
 sub rand_color {
-        return rand( 0xFFFFFF)  ;
+    return rand(0xFFFFFF);
 
 }
 
@@ -159,8 +168,7 @@ sub update_particle {
         $new_part_rect,
         $app,
         SDL::Rect->new(
-            $p->{x} - ($size / 2),
-            $p->{y} - ($size / 2),
+            $p->{x} - ( $size / 2 ), $p->{y} - ( $size / 2 ),
             $app->w, $app->h
         )
     );
@@ -169,22 +177,20 @@ sub update_particle {
     $old_part_rect[ $p->{n} ] = $new_part_rect;
 }
 
-sub rand_particle
-{
-    
+sub rand_particle {
+
     my $sim = shift;
 
-my $t = $par++;
-$sim->add_particle ( 
-    x  => rand( $app->w ) +50,
-    y  => rand( $app->h) +50,
-    z  => 0,
-    vx => rand(1) - rand(1),
-    vy => rand(1) -rand(1),
-    vz => 0,
-    m  => rand(36)+12,
-    n  => $t,
-);
-
+    my $t = $par++;
+    $sim->add_particle(
+        x  => rand( $app->w ) + 50,
+        y  => rand( $app->h ) + 50,
+        z  => 0,
+        vx => rand(1) - rand(1),
+        vy => rand(1) - rand(1),
+        vz => 0,
+        m  => rand(36) + 12,
+        n  => $t,
+    );
 
 }
