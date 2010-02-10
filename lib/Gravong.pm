@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use SDL;
+use Gravong::Particle;
 
 =head1 NAME
 
@@ -37,8 +38,34 @@ Perhaps a little code snippet.
 =cut
 
 sub run{
-	
-	print $VERSION;
+
+	my ($w,$h) = (800,600);
+
+	my ($dt, $t, $accumulator, $cur_time) = (0.1,0,0,0);
+
+	my $quit = 1;
+
+	my $particle = Gravong::Particle->new();
+
+	while($quit)
+	{
+		my $new_time = SDL::get_ticks();
+		my $delta_time = $new_time - $cur_time;
+
+		next	if ($delta_time <= 0.0);
+
+		$cur_time = $new_time;
+
+		$accumulator += $delta_time;
+
+		while( $accumulator >= $dt)
+		{
+			$particle->update( $t, $dt);
+			$accumulator -= $dt;
+			$t += $dt;
+		}
+			
+	}	
 	
 }
 
