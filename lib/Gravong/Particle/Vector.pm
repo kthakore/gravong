@@ -1,13 +1,15 @@
-package Garvong::Particle::Vector;
+package Gravong::Particle::Vector;
 
 use strict;
 use warnings;
 use Class::XSAccessor
-  replace   => 1,    # Replace existing methods (if any)
+  replace   => 0,    # Replace existing methods (if any)
   accessors => {
     x => 'x',
     y => 'y',
-  };
+  },
+  
+  ;
 
 sub new {
     my $class = shift;

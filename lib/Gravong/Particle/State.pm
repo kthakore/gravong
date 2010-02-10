@@ -9,6 +9,7 @@ accessors => {
     momentum => 'momentum',
     velocity => 'velocity',
     mass     => 'mass',
+    size     => 'size',
     invMass  => 'invMass'
 };
 
@@ -20,6 +21,7 @@ sub new {
     $self->{momentum} = 0 if !$self->{momentum};
     $self->{velocity} = 0 if !$self->{velocity};
     $self->{mass}     = 1 if !$self->{mass};
+    $self->{size}     = 1 if !$self->{size};
     $self->{invMass}  = 1 if !$self->{invMass};
     return $self;
 }
@@ -33,5 +35,4 @@ sub recalculate {
 
 
 1;
-
 
